@@ -23,7 +23,9 @@ import {
   MapPin,
   Lock,
   Camera,
-  Trash2
+  Trash2,
+  Image as ImageIcon,
+  Upload
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -33,8 +35,6 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
-  LineChart, 
-  Line,
   PieChart,
   Pie,
   Cell
@@ -72,7 +72,6 @@ const Card = ({ title, value, icon: Icon, colorClass }: { title: string, value: 
 
 // --- Settings Components ---
 
-// Fix: Made children optional to avoid TypeScript errors when used in JSX
 const SettingsCard = ({ title, icon: Icon, children, color }: { title: string, icon: any, children?: React.ReactNode, color: string }) => (
   <div className={`bg-white rounded-[32px] shadow-sm border-l-8 ${color} p-8 space-y-6 hover:shadow-lg transition-all duration-300`}>
     <div className="flex items-center gap-4 border-b border-gray-100 pb-4">
@@ -102,6 +101,74 @@ const SettingInput = ({ label, value, onChange, placeholder, type = "text", icon
     </div>
   </div>
 );
+
+// --- Modals ---
+
+const AddMemberModal = ({ isOpen, onClose, onAdd }: { isOpen: boolean, onClose: () => void, onAdd: (m: Partial<Member>) => void }) => {
+  const [formData, setFormData] = useState({
+    fullName: '',
+    role: 'General Member',
+    phoneNumber: '',
+    wifeName: '',
+    dpUrl: '',
+    address: ''
+  });
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="bg-white w-full max-w-xl rounded-[40px] shadow-2xl relative z-10 overflow-hidden animate-fadeIn">
+        <div className="bg-gradient-to-r from-red-600 to-red-800 p-8 text-white flex justify-between items-center">
+          <div>
+            <h3 className="text-2xl font-black uppercase tracking-tight">Add New Member</h3>
+            <p className="text-red-100 text-xs font-bold uppercase tracking-widest mt-1">Manual Member Entry</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X size={24} /></button>
+        </div>
+        
+        <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
+          <div className="flex justify-center mb-4">
+            <div className="relative group">
+              <div className="w-24 h-24 rounded-full bg-gray-100 border-4 border-yellow-400 overflow-hidden shadow-inner">
+                {formData.dpUrl ? (
+                  <img src={formData.dpUrl} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400"><Camera size={32} /></div>
+                )}
+              </div>
+              <div className="absolute -bottom-1 -right-1 bg-red-600 text-white p-2 rounded-full shadow-lg"><Camera size={14} /></div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SettingInput label="Full Name" value={formData.fullName} onChange={(val: string) => setFormData({...formData, fullName: val})} icon={Users} placeholder="e.g. Saikat Saha" />
+            <SettingInput label="Phone Number" value={formData.phoneNumber} onChange={(val: string) => setFormData({...formData, phoneNumber: val})} icon={Phone} placeholder="10 Digit Mobile" />
+            <SettingInput label="Wife Name" value={formData.wifeName} onChange={(val: string) => setFormData({...formData, wifeName: val})} icon={Users} placeholder="Spouse Name" />
+            <SettingInput label="Role" value={formData.role} onChange={(val: string) => setFormData({...formData, role: val})} icon={ShieldCheck} placeholder="e.g. Member" />
+            <div className="md:col-span-2">
+              <SettingInput label="Profile Photo URL" value={formData.dpUrl} onChange={(val: string) => setFormData({...formData, dpUrl: val})} icon={ImageIcon} placeholder="https://image-link.com/photo.jpg" />
+            </div>
+            <div className="md:col-span-2">
+              <SettingInput label="Address" value={formData.address} onChange={(val: string) => setFormData({...formData, address: val})} icon={MapPin} placeholder="Home Address" />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-8 bg-gray-50 border-t border-gray-100 flex gap-4">
+          <button onClick={onClose} className="flex-1 py-4 font-bold text-gray-500 hover:text-gray-700">Cancel</button>
+          <button 
+            onClick={() => { onAdd(formData); onClose(); }}
+            className="flex-[2] bg-red-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-red-700 active:scale-95 transition-all uppercase tracking-widest"
+          >
+            Register Member
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // --- Main Pages ---
 
@@ -455,6 +522,39 @@ const SettingsPage = ({ state, setState }: { state: AppState, setState: React.Di
           />
         </SettingsCard>
 
+        {/* Media & Assets */}
+        <SettingsCard title="Media & Assets" icon={ImageIcon} color="border-indigo-600">
+          <div className="space-y-4">
+             <div className="flex items-center gap-6 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+               <div className="w-20 h-20 rounded-xl bg-white border-2 border-indigo-300 overflow-hidden flex items-center justify-center shadow-inner">
+                  {state.settings.logoUrl ? (
+                    <img src={state.settings.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                  ) : (
+                    <ImageIcon className="text-indigo-200" size={32} />
+                  )}
+               </div>
+               <div className="flex-1 space-y-2">
+                 <p className="text-xs font-black text-indigo-700 uppercase tracking-widest">Committee Logo</p>
+                 <SettingInput 
+                    placeholder="Enter manual URL" 
+                    value={state.settings.logoUrl || ''} 
+                    onChange={(val: string) => updateSetting('logoUrl', val)}
+                  />
+               </div>
+             </div>
+             <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 space-y-3">
+                <p className="text-xs font-black text-indigo-700 uppercase tracking-widest">System Header Banner (Manual)</p>
+                <div className="w-full h-24 rounded-xl bg-white border-2 border-indigo-300 overflow-hidden relative shadow-inner">
+                   <div className="absolute inset-0 flex items-center justify-center text-indigo-100 font-black text-4xl uppercase opacity-20 pointer-events-none">BANNER PREVIEW</div>
+                   <img src="https://picsum.photos/seed/puja/800/200" alt="Banner" className="w-full h-full object-cover" />
+                </div>
+                <button className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors shadow-lg">
+                  <Upload size={18} /> Update Banner URL
+                </button>
+             </div>
+          </div>
+        </SettingsCard>
+
         {/* Contact Information */}
         <SettingsCard title="Contact Information" icon={Phone} color="border-red-600">
           <SettingInput 
@@ -589,6 +689,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('ab_pujacommittee_state', JSON.stringify(state));
@@ -607,6 +708,27 @@ export default function App() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     setPassword('');
+  };
+
+  const handleAddMember = (memberData: Partial<Member>) => {
+    const newMember: Member = {
+      id: `m${Date.now()}`,
+      fullName: memberData.fullName || 'Anonymous Member',
+      role: memberData.role || 'General Member',
+      phoneNumber: memberData.phoneNumber || '',
+      wifeName: memberData.wifeName || '',
+      dpUrl: memberData.dpUrl || `https://ui-avatars.com/api/?name=${memberData.fullName}`,
+      address: memberData.address || '',
+      joinDate: new Date().toISOString().split('T')[0],
+      creditScore: 100,
+      totalLifetimeContribution: 0,
+      createdDate: new Date().toISOString()
+    };
+
+    setState(prev => ({
+      ...prev,
+      members: [...prev.members, newMember]
+    }));
   };
 
   if (!isAuthenticated) {
@@ -732,11 +854,17 @@ export default function App() {
 
         <div className="max-w-7xl mx-auto">
           {activePage === 'dashboard' && <Dashboard state={state} />}
-          {activePage === 'members' && <MemberManagement state={state} onAddMember={() => alert('Feature to add member coming soon!')} />}
+          {activePage === 'members' && <MemberManagement state={state} onAddMember={() => setIsAddMemberOpen(true)} />}
           {activePage === 'finance' && <FinanceSection state={state} />}
           {activePage === 'committee' && <CommitteePage state={state} />}
           {activePage === 'settings' && <SettingsPage state={state} setState={setState} />}
         </div>
+
+        <AddMemberModal 
+          isOpen={isAddMemberOpen} 
+          onClose={() => setIsAddMemberOpen(false)} 
+          onAdd={handleAddMember} 
+        />
 
         <footer className="mt-20 py-8 border-t border-gray-100 text-center">
           <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">© {new Date().getFullYear()} {state.settings.name}</p>
