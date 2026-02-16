@@ -1,0 +1,7 @@
+{
+  "name": "Annapurna Boys Management System",
+  "description": "A comprehensive committee management application for Saraswati Puja, featuring financial tracking, member management, and year-wise reporting.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
